@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : Main.cpp
 //  Created     : 6.10.2022
-//  Modified    : 8.10.2022
+//  Modified    : 7.11.2022
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Main
 
@@ -11,7 +11,8 @@
 #include "Initializator.hpp"
 #include "SerialCommunicator.hpp"
 #include "PumpHandler.hpp"
-#include "WaterLevelHandler.hpp"
+#include "FloatWaterLevel.hpp"
+#include "LedIndicator.hpp"
 
 #include <Arduino.h>
 #include <stdio.h>
@@ -25,31 +26,30 @@ static int serialfPutChar(const char ch, FILE*)
 
 static FILE *serialStream = fdevopen(serialfPutChar, nullptr); // fget не используется, поэтому nullptr
 
-Gpio ledGreen1(10, OUTPUT);
-Gpio ledGreen2(7, OUTPUT);
-Gpio ledOrange(9, OUTPUT);
-Gpio ledRed(8, OUTPUT);
-Gpio ledBlue(11, OUTPUT);
+Gpio ledGreen1(3, OUTPUT);
+Gpio ledGreen2(4, OUTPUT);
+Gpio ledOrange1(5, OUTPUT);
+Gpio ledOrange2(6, OUTPUT);
+Gpio ledRed(7, OUTPUT);
+Gpio ledBlue(2, OUTPUT);
 
-Gpio pump(2, OUTPUT);
-Gpio button(6, INPUT);
-Gpio beeper(5, OUTPUT);
+Gpio pump(12, OUTPUT);
+Gpio button(A4, INPUT);
+Gpio beeper(9, OUTPUT);
 
 Gpio waterLevel1(A2, INPUT);
-Gpio waterLevel2(A0, INPUT);
-Gpio waterLevel3(A1, INPUT);
-Gpio waterPower(13, OUTPUT);
+Gpio waterLevel2(A1, INPUT);
+Gpio waterLevel3(A0, INPUT);
 
-// Инициализаторы в глобале чтобы в лямбдах не указывать захват, нет поддержки функторов
-PumpHandler pumpHandle(pump, button, ledBlue);
 SerialCommunicator communicator;
-WaterLeverHandler watLevHandle(100, ledGreen1, ledGreen2, ledOrange, ledRed, waterLevel1, 
-	waterLevel2, waterLevel3, waterPower, beeper);
 EeHandler eeprom;
+LedIndicator indicator(&ledRed, &ledOrange1, &ledOrange2, &ledGreen1, &ledGreen2);
+FloatLevelHandler floatLevel(100, waterLevel1, &waterLevel2, &waterLevel3, &indicator);
+PumpHandler pumpHandle(pump, &button, &ledBlue, &floatLevel);
 
 void postInit()
 {
-	Initializator initializator(ledGreen1, ledGreen2, ledOrange, ledRed, beeper, ledBlue);
+	Initializator initializator(&ledGreen1, &ledGreen2, &ledOrange1, &ledOrange2, &ledRed, &beeper, &ledBlue);
 }
 
 void setup()
@@ -61,9 +61,6 @@ void setup()
 	communicator.setPumpCallback([](Messages::HydroParams aParams){pumpHandle.updateParams(aParams);});
 	communicator.setEeCallback([](Messages::HydroParams aParams){eeprom.writeEeprom(aParams);});
 
-	// Колбек на разрешение включения насоса
-	watLevHandle.setCallback([](bool aPermit){pumpHandle.updatePermit(aPermit);});
-
 	// Загрузим значения из eeprom
 	Messages::HydroParams params = eeprom.readEeprom();
 	pumpHandle.updateParams(params); // Прокинем значения куда нужно
@@ -74,7 +71,7 @@ void setup()
 void loop() {
 
 	communicator.process();
-	watLevHandle.process();
+	floatLevel.process();
 	pumpHandle.process();
 
 	delay(10);

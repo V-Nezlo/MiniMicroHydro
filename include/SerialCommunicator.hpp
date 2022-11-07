@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : SerialCommunicator.hpp
 //  Created     : 6.10.2022
-//  Modified    : 8.10.2022
+//  Modified    : 7.11.2022
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Реализация настройки прибора через серийный порт
 
@@ -67,7 +67,7 @@ void process()
             String buffer = Serial.readStringUntil(0x0a);
             params.pumpOnTime = buffer.toInt() * 1000;
             state = State::SET_PUMPOFF_TIME;
-            printf("Pump on time was set on %lu \r\n", params.pumpOnTime);
+            printf("Pump on time was set on %lu seconds\r\n", params.pumpOnTime / 1000);
             printf("Enter pump off time cycle in secs (max 4 number):\r\n");
             break;
         }
@@ -75,7 +75,7 @@ void process()
         case State::SET_PUMPOFF_TIME:{
             String buffer = Serial.readStringUntil(0x0a);
             params.pumpOffTime = buffer.toInt() * 1000;
-            printf("Callback values is %lu, %lu", params.pumpOnTime,  params.pumpOffTime);
+            printf("Pump off time was set on %lu seconds\r\n", params.pumpOffTime / 1000);
 
             // Отправим по колбекам
             if (pumpCallback != nullptr) {
