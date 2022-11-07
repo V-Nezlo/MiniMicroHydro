@@ -8,11 +8,12 @@
 #include "FloatWaterLevel.hpp"
 
     FloatLevelHandler::FloatLevelHandler(uint32_t aUpdatePeriod, Gpio &aWaterLev1, Gpio *aWaterLev2, Gpio *aWaterLev3, 
-		AbstractWaterIndicator *aIndicator, bool aIsFloatLevel, Gpio *aWaterPower):
+		AbstractWaterIndicator *aIndicator, Gpio *aBeeper, bool aIsFloatLevel, Gpio *aWaterPower):
     waterLev1{aWaterLev1},
     waterLev2{aWaterLev2},
     waterLev3{aWaterLev3},
     waterPower{aWaterPower},
+    beeper{aBeeper},
     type{Type::OneSensors},
     nextUpdateTime{millis()},
     updatePeriod{aUpdatePeriod},
@@ -20,6 +21,7 @@
     isFloatLevel{aIsFloatLevel},
     currentProcents{0},
     permit{false},
+    beepState{false},
     indicator{aIndicator}
 {
     if (!isFloatLevel && waterPower == nullptr) {
@@ -101,6 +103,20 @@ void FloatLevelHandler::process()
         currentProcents = procent;
         nextUpdateTime = currentTime + updatePeriod;
     }
+
+		// Яростно кричим зумером если вода на исходе
+	if (error && beeper != nullptr) {
+		if (currentTime > nextBeepTime) {
+			if (beepState) {
+				beepState = false;
+				nextBeepTime = currentTime + kBeepOffTime;
+			} else {
+				beepState = true;
+				nextBeepTime = currentTime + kBeepOnTime;
+			}
+			beeper->setState(beepState);
+		}
+	}
 }
 
 uint8_t FloatLevelHandler::getLevel()

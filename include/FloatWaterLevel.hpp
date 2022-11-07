@@ -19,7 +19,7 @@ class FloatLevelHandler : public AbstractWaterLever {
 
 public:
     FloatLevelHandler(uint32_t aUpdatePeriod, Gpio &aWaterLev1, Gpio *aWaterLev2 = nullptr, Gpio *aWaterLev3 = nullptr, 
-		AbstractWaterIndicator *aIndicator = nullptr, bool aIsFloatLevel = true, Gpio *aWaterPower = nullptr);
+		AbstractWaterIndicator *aIndicator = nullptr, Gpio *aBeeper = nullptr, bool aIsFloatLevel = true, Gpio *aWaterPower = nullptr);
 	FloatLevelHandler(const FloatLevelHandler &) = delete;
 	FloatLevelHandler operator=(const FloatLevelHandler &) = delete;
 	virtual ~FloatLevelHandler();
@@ -29,13 +29,14 @@ public:
 	bool getPermit() override;
 
 private:
-static constexpr uint32_t beepOnTime{100}; // Ms
-static constexpr uint32_t beepOffTime{50000}; // Ms
+static constexpr uint32_t kBeepOnTime{200}; // Ms
+static constexpr uint32_t kBeepOffTime{30000}; // Ms
 
 Gpio &waterLev1; // Защита от пропихивания нульпоинтера на место важного элемента
 Gpio *waterLev2;
 Gpio *waterLev3;
 Gpio *waterPower;
+Gpio *beeper;
 
 enum class Type{
 	ThreeSensors,
@@ -50,6 +51,7 @@ bool isFloatLevel;
 
 uint8_t currentProcents;
 bool permit;
+bool beepState;
 
 AbstractWaterIndicator *indicator;
 };

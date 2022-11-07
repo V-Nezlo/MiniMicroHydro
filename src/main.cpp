@@ -44,7 +44,7 @@ Gpio waterLevel3(A0, INPUT);
 SerialCommunicator communicator;
 EeHandler eeprom;
 LedIndicator indicator(&ledRed, &ledOrange1, &ledOrange2, &ledGreen1, &ledGreen2);
-FloatLevelHandler floatLevel(100, waterLevel1, &waterLevel2, &waterLevel3, &indicator);
+FloatLevelHandler floatLevel(100, waterLevel1, &waterLevel2, &waterLevel3, &indicator, &beeper);
 PumpHandler pumpHandle(pump, &button, &ledBlue, &floatLevel);
 
 void postInit()
