@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : Main.cpp
 //  Created     : 6.10.2022
-//  Modified    : 7.11.2022
+//  Modified    : 5.12.2022
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Main
 
@@ -58,8 +58,8 @@ void setup()
 	communicator.init(115200); // Запускаем коммуникатор на скорости 115200
 
 	// Колбеки на обновление параметров работы
-	communicator.setPumpCallback([](Messages::HydroParams aParams){pumpHandle.updateParams(aParams);});
-	communicator.setEeCallback([](Messages::HydroParams aParams){eeprom.writeEeprom(aParams);});
+	communicator.registerObserver([](Messages::HydroParams aParams){eeprom.writeEeprom(aParams);});
+	communicator.registerObserver([](Messages::HydroParams aParams){pumpHandle.updateParams(aParams);});
 
 	// Загрузим значения из eeprom
 	Messages::HydroParams params = eeprom.readEeprom();
