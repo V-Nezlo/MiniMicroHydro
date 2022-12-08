@@ -11,9 +11,8 @@ PumpHandler::PumpHandler(Gpio &aPump, Gpio *aButton, Gpio *aLedBlue, AbstractWat
     pumpPin{aPump},
     button{aButton},
     ledBlue{aLedBlue},
-    params{},
     state{State::PUMPOFF},
-    nextSwitchTime{millis() + params.pumpOffTime},
+    nextSwitchTime{millis() + ConfigStorage::instance()->config.pumpOffTime}, // Небольшой костыль, сюда прокидывается значение по умолчанию
     nextButtonCheckTime{millis()},
     permit{true},
     level{aLevel}
@@ -23,11 +22,6 @@ PumpHandler::PumpHandler(Gpio &aPump, Gpio *aButton, Gpio *aLedBlue, AbstractWat
     }
 }
 
-void PumpHandler::updateParams(Messages::HydroParams &aParams)
-{
-    params = aParams;
-}
-
 void PumpHandler::process()
 {
     uint32_t currentTime = millis();
@@ -35,7 +29,7 @@ void PumpHandler::process()
     if (currentTime > nextSwitchTime) {
         if (state == State::PUMPOFF) {
             state = State::PUMPON;
-            nextSwitchTime = currentTime + params.pumpOnTime;
+            nextSwitchTime = currentTime + ConfigStorage::instance()->config.pumpOnTime;
             // Если есть защита от работы нахолостую - проверяем уровень воды
             if (level != nullptr) {
                 if (level->getPermit()) {
@@ -53,7 +47,7 @@ void PumpHandler::process()
             }
         } else if (state == State::PUMPON) {
             state = State::PUMPOFF;
-            nextSwitchTime = currentTime + params.pumpOffTime;
+            nextSwitchTime = currentTime + ConfigStorage::instance()->config.pumpOffTime;
             pumpPin.reset(); // Отключаем насос
             if (ledBlue != nullptr) {
                 ledBlue->reset();

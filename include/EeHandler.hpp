@@ -8,27 +8,26 @@
 #ifndef EEHANDLER
 #define EEHANDLER
 
+#include "ConfigStorage.hpp"
 #include <Arduino.h>
 #include <EEPROM.h>
-#include "Messages.hpp"
 
 class EeHandler {
 public:
-    void writeEeprom(Messages::HydroParams aParams)
+    static void update()
     {
         EEPROM.begin();
-        EEPROM.put(0, aParams);
+        EEPROM.put(0, ConfigStorage::instance()->config);
         EEPROM.end();
     }
 
-    Messages::HydroParams readEeprom()
+    static void readEeprom()
     {
-        Messages::HydroParams params;
+        ConfigStorage::Config newConfig;
         EEPROM.begin();
-        EEPROM.get(0, params);
+        EEPROM.get(0, newConfig);
         EEPROM.end();
-        return params;
-        
+        ConfigStorage::instance()->config = newConfig;
     }
 };
 
