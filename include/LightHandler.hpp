@@ -10,6 +10,7 @@
 
 #include "ConfigStorage.hpp"
 #include "GpioWrapper.hpp"
+#include "TimeWrapper.hpp"
 #include <RTClib.h>
 #include <Arduino.h>
 
@@ -36,7 +37,7 @@ public:
 
     void process()
     {
-        uint32_t currentTime = millis();
+        uint32_t currentTime = TimeWrapper::milliseconds();
 
         if (currentTime > nextCheckTime) {
             nextCheckTime = currentTime + kUpdateTime;

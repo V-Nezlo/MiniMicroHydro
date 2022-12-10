@@ -1,33 +1,27 @@
 //-----------------------------------------------------------------------
 //  File        : WaterLevelHandler.cpp
 //  Created     : 7.11.2022
-//  Modified    : 7.11.2022
+//  Modified    : 10.12.2022
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description :
 
 #include "FloatWaterLevel.hpp"
 
     FloatLevelHandler::FloatLevelHandler(uint32_t aUpdatePeriod, Gpio &aWaterLev1, Gpio *aWaterLev2, Gpio *aWaterLev3, 
-		AbstractWaterIndicator *aIndicator, Gpio *aBeeper, bool aIsFloatLevel, Gpio *aWaterPower):
+		AbstractWaterIndicator *aIndicator, Gpio *aBeeper):
     waterLev1{aWaterLev1},
     waterLev2{aWaterLev2},
     waterLev3{aWaterLev3},
-    waterPower{aWaterPower},
     beeper{aBeeper},
     type{Type::OneSensors},
-    nextUpdateTime{millis()},
+    nextUpdateTime{TimeWrapper::milliseconds()},
     updatePeriod{aUpdatePeriod},
-    nextBeepTime{millis()},
-    isFloatLevel{aIsFloatLevel},
+    nextBeepTime{TimeWrapper::milliseconds()},
     currentProcents{0},
     permit{false},
     beepState{false},
     indicator{aIndicator}
 {
-    if (!isFloatLevel && waterPower == nullptr) {
-        printf("Selected electrode level but power pin is not defined");
-    }
-
     if (aWaterLev3 != nullptr) {
         type = Type::ThreeSensors;
     } else if (aWaterLev2 != nullptr) {
@@ -44,14 +38,10 @@ FloatLevelHandler::~FloatLevelHandler()
 
 void FloatLevelHandler::process()
 {
-    uint32_t currentTime = millis();
+    uint32_t currentTime = TimeWrapper::milliseconds();
     bool error = false;
 
     if (currentTime > nextUpdateTime) {
-        // Только если имеем дело с электродными датчиками
-        if (!isFloatLevel && waterPower != nullptr) {
-            waterPower->set(); // Подаем питание на измерительные цепи
-        }
 
         uint8_t procent{0};
         bool water1State = waterLev1.digitalRead(); // Самый низкий датчик, он есть всегда
@@ -89,10 +79,6 @@ void FloatLevelHandler::process()
                     error = true;
                 }
                 break;
-        }
-        // Только если имеем дело с электродными датчиками
-        if (!isFloatLevel && waterPower != nullptr) {
-            waterPower->reset(); // Убираем питание с измерительных цепей чтобы не вызывать электролиз
         }
 
         if (indicator != nullptr) {

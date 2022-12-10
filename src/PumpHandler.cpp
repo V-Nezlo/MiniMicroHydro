@@ -12,8 +12,8 @@ PumpHandler::PumpHandler(Gpio &aPump, Gpio *aButton, Gpio *aLedBlue, AbstractWat
     button{aButton},
     ledBlue{aLedBlue},
     state{State::PUMPOFF},
-    nextSwitchTime{millis() + ConfigStorage::instance()->config.pumpOffTime}, // Небольшой костыль, сюда прокидывается значение по умолчанию
-    nextButtonCheckTime{millis()},
+    nextSwitchTime{TimeWrapper::milliseconds() + ConfigStorage::instance()->config.pumpOffTime}, // Небольшой костыль, сюда прокидывается значение по умолчанию
+    nextButtonCheckTime{TimeWrapper::milliseconds()},
     permit{true},
     level{aLevel}
 {
@@ -24,7 +24,7 @@ PumpHandler::PumpHandler(Gpio &aPump, Gpio *aButton, Gpio *aLedBlue, AbstractWat
 
 void PumpHandler::process()
 {
-    uint32_t currentTime = millis();
+    uint32_t currentTime = TimeWrapper::milliseconds();
 
     if (currentTime > nextSwitchTime) {
         if (state == State::PUMPOFF) {

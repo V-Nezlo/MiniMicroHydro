@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : WaterLevelHandler.hpp
 //  Created     : 6.10.2022
-//  Modified    : 7.11.2022
+//  Modified    : 10.12.2022
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Реализация работы электродного датчика уровня
 
@@ -12,6 +12,7 @@
 #include "AbstractWaterIndicator.hpp"
 #include "Constants.hpp"
 #include "GpioWrapper.hpp"
+#include "TimeWrapper.hpp"
 #include <Arduino.h>
 #include "assert.h"
 
@@ -19,7 +20,7 @@ class FloatLevelHandler : public AbstractWaterLever {
 
 public:
     FloatLevelHandler(uint32_t aUpdatePeriod, Gpio &aWaterLev1, Gpio *aWaterLev2 = nullptr, Gpio *aWaterLev3 = nullptr, 
-		AbstractWaterIndicator *aIndicator = nullptr, Gpio *aBeeper = nullptr, bool aIsFloatLevel = true, Gpio *aWaterPower = nullptr);
+		AbstractWaterIndicator *aIndicator = nullptr, Gpio *aBeeper = nullptr);
 	FloatLevelHandler(const FloatLevelHandler &) = delete;
 	FloatLevelHandler operator=(const FloatLevelHandler &) = delete;
 	virtual ~FloatLevelHandler();
@@ -35,7 +36,6 @@ static constexpr uint32_t kBeepOffTime{30000}; // Ms
 Gpio &waterLev1; // Защита от пропихивания нульпоинтера на место важного элемента
 Gpio *waterLev2;
 Gpio *waterLev3;
-Gpio *waterPower;
 Gpio *beeper;
 
 enum class Type{

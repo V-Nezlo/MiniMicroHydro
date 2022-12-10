@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : GpioWrapper.cpp
 //  Created     : 23.10.2022
-//  Modified    : 23.10.2022
+//  Modified    : 10.12.2022
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : ООП обертка для gpio
 
@@ -53,12 +53,14 @@ int Gpio::analogRead()
 
 void Gpio::analogWrite(int aValue)
 {
+	// Ремарка - внутри analogWrite уже есть проверка на присутствие таймера на ноге
+	// Почему сделано именно так - там стоит кривое условие, если val < 128 то это 0, если больше - 255
+	// Крайне неудобно это учитывать в коде, поэтому я заменяю проверку этого условия
 	if (checkPwmPinStatus()) {
 		return ::analogWrite(number, aValue);
 	} else {
 		return ::digitalWrite(number, static_cast<uint8_t>(aValue));
 	}
-
 }
 
 bool Gpio::checkPwmPinStatus()

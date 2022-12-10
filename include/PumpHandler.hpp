@@ -8,10 +8,11 @@
 #ifndef PUMPHANDLER
 #define PUMPHANDLER
 
-#include <Arduino.h>
-#include "GpioWrapper.hpp"
 #include "AbstractWaterLevel.hpp"
 #include "ConfigStorage.hpp"
+#include "GpioWrapper.hpp"
+#include "TimeWrapper.hpp"
+#include <Arduino.h>
 
 class PumpHandler {
     static constexpr uint32_t kButtonUpdateFreq{100};
