@@ -1,19 +1,19 @@
 //-----------------------------------------------------------------------
 //  File        : SerialCommunicator.hpp
 //  Created     : 6.10.2022
-//  Modified    : 8.12.2022
+//  Modified    : 11.12.2022
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : 
 
 #include "ConfigStorage.hpp"
 #include "SerialCommunicator.hpp"
+#include "TimeContainer.hpp"
 #include "PumpHandler.hpp"
 #include <Arduino.h>
 
 SerialCommunicator::SerialCommunicator() :
     state{State::Idle},
     observers{nullptr},
-    timeObserver{nullptr},
     observerCounter{0}
 {
 }
@@ -36,11 +36,6 @@ void SerialCommunicator::registerObserver(void (*aCallback)(void))
     }
 }
 
-void SerialCommunicator::setTimeObserver(void (*aTimeObserver)(const uint8_t*))
-{
-    timeObserver = aTimeObserver;
-}
-
 void SerialCommunicator::process()
 {
 if (Serial.available()) {
@@ -58,11 +53,6 @@ if (Serial.available()) {
     if (buffer == "help" && state == State::Idle) {
         printf("Supported commands: pumpconfig, lightconfig, settime, time \r\n");
         return;
-    }
-
-    // Команда выводит текущее время если в системе есть часы реального времени
-    if (buffer == "time" && ConfigStorage::instance()->temp.haveLight) {
-        // TODO
     }
 
     // Переключатель для настройки
@@ -106,12 +96,7 @@ if (Serial.available()) {
                 ConfigStorage::instance()->config.pumpOffTime = buffer.toInt() * 1000;
                 printf("New pump parameters - on cycle: %lu secs, off cycle: %lu\r\n", 
                     ConfigStorage::instance()->config.pumpOnTime / 1000, ConfigStorage::instance()->config.pumpOffTime / 1000);
-                // Отправим по колбекам
-                for (uint8_t i = 0; i < observerCounter; ++i) {
-                    if (observers[i] != nullptr) {
-                        observers[i]();
-                    }
-                }
+                callbacks();
                 state = State::Idle;
                 printf("Config done\r\n");
             }
@@ -119,16 +104,19 @@ if (Serial.available()) {
         case State::SetTime:
             if (buffer.indexOf(0x20, 0) == 2 && buffer.indexOf(0x20, 3) == 5 && buffer.length() == 8)
             {
-                uint8_t newTime[3] = {
-                    static_cast<uint8_t>(buffer.substring(0, 2).toInt()),
-                    static_cast<uint8_t>(buffer.substring(3, 5).toInt()),
-                    static_cast<uint8_t>(buffer.substring(6, 8).toInt())};
+                TimeContainer newTime(
+                     static_cast<uint8_t>(buffer.substring(0, 2).toInt()),
+                     static_cast<uint8_t>(buffer.substring(3, 5).toInt()),
+                     static_cast<uint8_t>(buffer.substring(6, 8).toInt())
+                );
 
-                if (newTime[0] < 24 && newTime[1] < 60 && newTime[2] < 60) {
-                    if (timeObserver != nullptr) {
-                        timeObserver(newTime);
-                    }
-                    printf("New time = h:%u m:%u s:%u\r\n", newTime[0], newTime[1], newTime[2]);
+                if (newTime.hour() < 24 && newTime.minute() < 60 && newTime.second() < 60) {
+                    ConfigStorage::instance()->temp.settingTime = newTime;
+                    callbacks();
+                    printf("New time = h:%u m:%u s:%u\r\n", 
+                        ConfigStorage::instance()->temp.settingTime.hour(), 
+                        ConfigStorage::instance()->temp.settingTime.minute(), 
+                        ConfigStorage::instance()->temp.settingTime.second());
                     state = State::Idle;
                 } else {
                     printf("Wrong time\r\n");
@@ -139,13 +127,12 @@ if (Serial.available()) {
             break;
         case State::SetLightOnTime:
             if (buffer.length() == 5 && buffer.indexOf(0x20) == 2) {
-                uint8_t newPumpOnTime[2] = {
+                TimeContainer newLightOnTime(
                     static_cast<uint8_t>(buffer.substring(0, 2).toInt()), 
-                    static_cast<uint8_t>(buffer.substring(3, 5).toInt())};
+                    static_cast<uint8_t>(buffer.substring(3, 5).toInt()));
 
-                if (newPumpOnTime[0] < 24 && newPumpOnTime[1] < 60) {
-                    ConfigStorage::instance()->config.lightOnTime[0] = newPumpOnTime[0];
-                    ConfigStorage::instance()->config.lightOnTime[1] = newPumpOnTime[1];
+                if (newLightOnTime.hour() < 24 && newLightOnTime.minute() < 60) {
+                    ConfigStorage::instance()->config.lightOnTime = newLightOnTime;
                     printf("Enter light off time in format hh mm\r\n");
                     state = State::SetLightOffTime;
                 } else {
@@ -157,25 +144,19 @@ if (Serial.available()) {
             break;
         case State::SetLightOffTime:
             if (buffer.length() == 5 &&  buffer.indexOf(0x20) == 2) {
-                uint8_t newPumpOffTime[2] = {
+                TimeContainer newLightOffTime(
                     static_cast<uint8_t>(buffer.substring(0, 2).toInt()), 
-                    static_cast<uint8_t>(buffer.substring(3, 5).toInt())};
+                    static_cast<uint8_t>(buffer.substring(3, 5).toInt()));
 
-                if (newPumpOffTime[0] < 24 && newPumpOffTime[1] < 60) {
-                    ConfigStorage::instance()->config.lightOffTime[0] = newPumpOffTime[0];
-                    ConfigStorage::instance()->config.lightOffTime[1] = newPumpOffTime[1];
+                if (newLightOffTime.hour() < 24 && newLightOffTime.minute() < 60) {
+                    ConfigStorage::instance()->config.lightOffTime = newLightOffTime;
                     printf("Light will be turned on in %u:%u and turned off in %u:%u \r\n",
-                        ConfigStorage::instance()->config.lightOnTime[0],
-                        ConfigStorage::instance()->config.lightOnTime[1],
-                        ConfigStorage::instance()->config.lightOffTime[0],
-                        ConfigStorage::instance()->config.lightOffTime[1]
+                        ConfigStorage::instance()->config.lightOnTime.hour(),
+                        ConfigStorage::instance()->config.lightOnTime.minute(),
+                        ConfigStorage::instance()->config.lightOffTime.hour(),
+                        ConfigStorage::instance()->config.lightOffTime.minute()
                     );
-                    // Отправим по колбекам
-                    for (uint8_t i = 0; i < observerCounter; ++i) {
-                        if (observers[i] != nullptr) {
-                            observers[i]();
-                        }
-                    }
+                    callbacks();
                     state = State::Idle;
                     printf("Config done\r\n");
                 } else {
@@ -185,6 +166,15 @@ if (Serial.available()) {
                 printf("Wrong argument\r\n");
             }
             break;
+        }
+    }
+}
+
+void SerialCommunicator::callbacks()
+{
+    for (uint8_t i = 0; i < observerCounter; ++i) {
+        if (observers[i] != nullptr) {
+            observers[i]();
         }
     }
 }

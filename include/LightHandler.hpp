@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : PumpHandler.hpp
 //  Created     : 3.12.2022
-//  Modified    : 8.12.2022
+//  Modified    : 11.12.2022
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Обработчик лампы или эквивалентного устройства
 
@@ -26,7 +26,6 @@ public:
         ConfigStorage::instance()->temp.haveLight = true;
     }
 
-    // Вызывать исклютельно из setup()
     void init()
     {
         if (!clock.begin()) {
@@ -41,20 +40,36 @@ public:
 
         if (currentTime > nextCheckTime) {
             nextCheckTime = currentTime + kUpdateTime;
+
+            DateTime time = clock.now();
+            TimeContainer curContainedTime(time.hour(), time.minute(), time.second());
+
+            if (curContainedTime < ConfigStorage::instance()->config.lightOnTime || 
+                curContainedTime > ConfigStorage::instance()->config.lightOffTime) {
+                lightPin.reset();
+            } else {
+                lightPin.set();
+            }
         }
     }
 
     void update()
     {
-        DateTime time(
-            2022,
-            12,
-            1,
-            ConfigStorage::instance()->temp.passingCurtime[0],
-            ConfigStorage::instance()->temp.passingCurtime[1],
-            ConfigStorage::instance()->temp.passingCurtime[2]
-        );
-        clock.adjust(time);
+        // Проверим, есть ли RTC и есть ли в структуре с временем время
+        if (ConfigStorage::instance()->temp.haveLight && !ConfigStorage::instance()->temp.settingTime.isEmpty()) {
+            DateTime time(
+                2022,
+                12,
+                1,
+                ConfigStorage::instance()->temp.settingTime.hour(),
+                ConfigStorage::instance()->temp.settingTime.minute(),
+                ConfigStorage::instance()->temp.settingTime.second()
+            );
+            clock.adjust(time);
+
+            // Явно скажем структуре что она пуста
+            ConfigStorage::instance()->temp.settingTime.clear();
+        }
     }
 
 private:
