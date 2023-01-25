@@ -17,10 +17,11 @@
 template <typename Clock>
 class LightHandler {
 public:
-    LightHandler(Gpio &aLightPin):
+    LightHandler(uint16_t aUpdatePeriod, Gpio &aLightPin):
         lightPin{aLightPin},
         clock{},
-        nextCheckTime{0}
+        nextCheckTime{0},
+        updatePeriod{aUpdatePeriod}
     {
         // Скажем остальному коду что у нас есть обработчик для лампы
         ConfigStorage::instance()->temp.haveLight = true;
@@ -39,8 +40,8 @@ public:
         uint32_t currentTime = TimeWrapper::milliseconds();
 
         if (currentTime > nextCheckTime) {
-            nextCheckTime = currentTime + kUpdateTime;
 
+            nextCheckTime = currentTime + updatePeriod;
             DateTime time = clock.now();
             TimeContainer curContainedTime(time.hour(), time.minute(), time.second());
 
@@ -76,8 +77,7 @@ private:
     Gpio &lightPin;
     Clock clock;
     uint32_t nextCheckTime;
-
-    static constexpr uint32_t kUpdateTime{100};
+    uint16_t updatePeriod;
 };
 
 #endif

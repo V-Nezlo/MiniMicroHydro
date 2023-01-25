@@ -29,28 +29,28 @@ static int serialfPutChar(const char ch, FILE*)
 static FILE *serialStream = fdevopen(serialfPutChar, nullptr); // fget не используется, поэтому nullptr
 
 // Настройки пинов, менять под свою конфигурацию
-Gpio ledGreen1(3, OUTPUT);
-Gpio ledGreen2(4, OUTPUT);
-Gpio ledOrange1(5, OUTPUT);
-Gpio ledOrange2(6, OUTPUT);
-Gpio ledRed(7, OUTPUT);
-Gpio ledBlue(2, OUTPUT);
+Gpio ledBlue(7, OUTPUT);
+Gpio ledGreen1(8, OUTPUT);
+Gpio ledGreen2(9, OUTPUT);
+Gpio ledOrange1(10, OUTPUT);
+Gpio ledOrange2(11, OUTPUT);
+Gpio ledRed(12, OUTPUT);
 
-Gpio pump(12, OUTPUT);
-Gpio button(A4, INPUT);
-Gpio beeper(9, OUTPUT);
-Gpio lightPin{13, OUTPUT};
+Gpio pump(3, OUTPUT);
+Gpio button(A3, INPUT);
+Gpio beeper(A1, OUTPUT);
+Gpio lightPin{2, OUTPUT};
 
-Gpio waterLevel1(A2, INPUT);
-Gpio waterLevel2(A1, INPUT);
-Gpio waterLevel3(A0, INPUT);
+Gpio waterLevel1(6, INPUT_PULLUP);
+Gpio waterLevel2(5, INPUT_PULLUP);
+Gpio waterLevel3(4, INPUT_PULLUP);
 
 SerialCommunicator communicator;
 EeHandler eeprom;
 LedIndicator indicator(&ledRed, &ledOrange1, &ledOrange2, &ledGreen1, &ledGreen2);
 FloatLevelHandler floatLevel(500, waterLevel1, &waterLevel2, &waterLevel3, &indicator, &beeper);
 PumpHandler pumpHandle(pump, nullptr, &ledBlue, &floatLevel);
-LightHandler<RTC_DS1307> lightHandler(lightPin);
+LightHandler<RTC_DS1307> lightHandler(500, lightPin);
 
 void postInit()
 {
@@ -73,6 +73,7 @@ void loop() {
 	communicator.process();
 	floatLevel.process();
 	pumpHandle.process();
+	lightHandler.process();
 
 	delay(200);
 }

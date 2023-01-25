@@ -104,6 +104,7 @@ if (Serial.available()) {
         case State::SetTime:
             if (buffer.indexOf(0x20, 0) == 2 && buffer.indexOf(0x20, 3) == 5 && buffer.length() == 8)
             {
+
                 TimeContainer newTime(
                      static_cast<uint8_t>(buffer.substring(0, 2).toInt()),
                      static_cast<uint8_t>(buffer.substring(3, 5).toInt()),
@@ -112,11 +113,11 @@ if (Serial.available()) {
 
                 if (newTime.hour() < 24 && newTime.minute() < 60 && newTime.second() < 60) {
                     ConfigStorage::instance()->temp.settingTime = newTime;
-                    callbacks();
                     printf("New time = h:%u m:%u s:%u\r\n", 
                         ConfigStorage::instance()->temp.settingTime.hour(), 
                         ConfigStorage::instance()->temp.settingTime.minute(), 
                         ConfigStorage::instance()->temp.settingTime.second());
+                    callbacks();
                     state = State::Idle;
                 } else {
                     printf("Wrong time\r\n");
