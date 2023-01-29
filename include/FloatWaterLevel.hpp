@@ -19,7 +19,7 @@
 class FloatLevelHandler : public AbstractWaterLever {
 
 public:
-    FloatLevelHandler(uint32_t aUpdatePeriod, Gpio &aWaterLev1, Gpio *aWaterLev2 = nullptr, Gpio *aWaterLev3 = nullptr, 
+    FloatLevelHandler(uint32_t aUpdatePeriod, bool aInversion, Gpio &aWaterLev1, Gpio *aWaterLev2 = nullptr, Gpio *aWaterLev3 = nullptr, 
 		AbstractWaterIndicator *aIndicator = nullptr, Gpio *aBeeper = nullptr);
 	FloatLevelHandler(const FloatLevelHandler &) = delete;
 	FloatLevelHandler operator=(const FloatLevelHandler &) = delete;
@@ -52,6 +52,7 @@ bool isFloatLevel;
 uint8_t currentProcents;
 bool permit;
 bool beepState;
+bool inversion;
 
 AbstractWaterIndicator *indicator;
 };

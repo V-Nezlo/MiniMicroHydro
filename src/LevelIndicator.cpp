@@ -83,15 +83,15 @@
                 }
 
                 if (aProcent >= Consts::kLevelFive2Procent) {
-                    ledPins[static_cast<uint8_t>(LedType::GREEN1)]->set();
-                } else {
-                    ledPins[static_cast<uint8_t>(LedType::GREEN1)]->reset();
-                }
-
-                if (aProcent >= Consts::kLevelFive3Procent) {
                     ledPins[static_cast<uint8_t>(LedType::GREEN2)]->set();
                 } else {
                     ledPins[static_cast<uint8_t>(LedType::GREEN2)]->reset();
+                }
+
+                if (aProcent >= Consts::kLevelFive3Procent) {
+                    ledPins[static_cast<uint8_t>(LedType::GREEN1)]->set();
+                } else {
+                    ledPins[static_cast<uint8_t>(LedType::GREEN1)]->reset();
                 }
                 break;
         }

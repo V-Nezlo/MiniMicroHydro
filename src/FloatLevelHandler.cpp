@@ -7,7 +7,7 @@
 
 #include "FloatWaterLevel.hpp"
 
-    FloatLevelHandler::FloatLevelHandler(uint32_t aUpdatePeriod, Gpio &aWaterLev1, Gpio *aWaterLev2, Gpio *aWaterLev3, 
+    FloatLevelHandler::FloatLevelHandler(uint32_t aUpdatePeriod, bool aInversion, Gpio &aWaterLev1, Gpio *aWaterLev2, Gpio *aWaterLev3, 
 		AbstractWaterIndicator *aIndicator, Gpio *aBeeper):
     waterLev1{aWaterLev1},
     waterLev2{aWaterLev2},
@@ -20,6 +20,7 @@
     currentProcents{0},
     permit{false},
     beepState{false},
+    inversion{aInversion},
     indicator{aIndicator}
 {
     if (aWaterLev3 != nullptr) {
@@ -47,6 +48,12 @@ void FloatLevelHandler::process()
         bool water1State = waterLev1.digitalRead(); // Самый низкий датчик, он есть всегда
         bool water2State = waterLev2 != nullptr ? waterLev2->digitalRead() : false; // Датчик повыше
         bool water3State = waterLev3 != nullptr ? waterLev3->digitalRead() : false; // Высокий датчик ваще жесть
+
+        if (inversion) {
+            water1State = !water1State;
+            water2State = !water2State;
+            water3State = !water3State;
+        }
 
         switch (type) {
             case Type::ThreeSensors:
