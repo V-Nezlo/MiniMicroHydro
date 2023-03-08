@@ -81,7 +81,7 @@ if (Serial.available()) {
             }
             break;
         case State::SetPumpOnTime:
-            if (buffer.length() > 4) {
+            if (buffer.length() > 6) {
                 printf("Wrong argument\r\n");
             } else {
                 ConfigStorage::instance()->config.pumpOnTime = buffer.toInt() * 1000;
@@ -90,7 +90,7 @@ if (Serial.available()) {
             }
             break;
         case State::SetPumpOffTime:
-            if (buffer.length() > 4) {
+            if (buffer.length() > 6) {
                 printf("Wrong argument\r\n");
             } else {
                 ConfigStorage::instance()->config.pumpOffTime = buffer.toInt() * 1000;

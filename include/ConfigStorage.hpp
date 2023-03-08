@@ -23,7 +23,7 @@ public:
     // Структура для данных, которые не нужно хранить в энергонезависимой памяти
     struct Temp {
         bool haveLight{false};
-        TimeContainer settingTime;
+        TimeContainer settingTime{0,0};
     } temp;
 
     static ConfigStorage *instance()
