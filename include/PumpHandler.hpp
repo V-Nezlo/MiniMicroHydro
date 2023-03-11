@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : PumpHandler.hpp
 //  Created     : 6.10.2022
-//  Modified    : 7.11.2022
+//  Modified    : 11.03.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Обработчик насоса
 
@@ -34,6 +34,7 @@ State state;
 uint32_t nextSwitchTime;
 uint32_t nextButtonCheckTime;
 bool permit;
+bool initialized;
 
 AbstractWaterLever *level;
 };

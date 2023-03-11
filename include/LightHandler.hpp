@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : PumpHandler.hpp
 //  Created     : 3.12.2022
-//  Modified    : 11.12.2022
+//  Modified    : 11.03.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Обработчик лампы или эквивалентного устройства
 
@@ -25,6 +25,7 @@ public:
     {
         // Скажем остальному коду что у нас есть обработчик для лампы
         ConfigStorage::instance()->temp.haveLight = true;
+        ConfigStorage::instance()->temp.settingTime.clear();
     }
 
     void init()

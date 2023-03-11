@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : PumpHandler.hpp
 //  Created     : 7.11.2022
-//  Modified    : 7.11.2022
+//  Modified    : 11.03.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : 
 
@@ -12,9 +12,10 @@ PumpHandler::PumpHandler(Gpio &aPump, Gpio *aButton, Gpio *aLedBlue, AbstractWat
     button{aButton},
     ledBlue{aLedBlue},
     state{State::PUMPOFF},
-    nextSwitchTime{TimeWrapper::milliseconds() + ConfigStorage::instance()->config.pumpOffTime}, // Небольшой костыль, сюда прокидывается значение по умолчанию
+    nextSwitchTime{0}, 
     nextButtonCheckTime{TimeWrapper::milliseconds()},
     permit{true},
+    initialized{false},
     level{aLevel}
 {
     if (aLevel == nullptr) {
@@ -24,6 +25,12 @@ PumpHandler::PumpHandler(Gpio &aPump, Gpio *aButton, Gpio *aLedBlue, AbstractWat
 
 void PumpHandler::process()
 {
+    // Начинаем с состояния выкл и ждем полное время отключенного насоса
+    if (!initialized) {
+        initialized = true;
+        nextSwitchTime = TimeWrapper::milliseconds() + ConfigStorage::instance()->config.pumpOffTime;
+    }
+
     uint32_t currentTime = TimeWrapper::milliseconds();
 
     if (currentTime > nextSwitchTime) {
