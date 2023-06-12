@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : Main.cpp
 //  Created     : 6.10.2022
-//  Modified    : 8.12.2022
+//  Modified    : 12.06.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Main
 
@@ -15,6 +15,7 @@
 
 #include "LightHandler.hpp"
 #include "RTClib.h"
+#include "StartupInfo.hpp"
 
 #include <Arduino.h>
 #include <stdio.h>
@@ -66,6 +67,7 @@ void setup()
 	communicator.registerObserver([](){lightHandler.update();});
 	EeHandler::readEeprom();
 	postInit(); // Удалим инициализатор автоматически
+	StartupInfo::display(); // Отобразим текущие параметры
 }
 
 void loop() {

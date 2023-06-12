@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : PumpHandler.hpp
 //  Created     : 3.12.2022
-//  Modified    : 11.03.2023
+//  Modified    : 12.06.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Обработчик лампы или эквивалентного устройства
 
@@ -33,6 +33,9 @@ public:
         if (!clock.begin()) {
             ConfigStorage::instance()->temp.haveLight = false;
             printf("Couldn't find RTC chip, light control disabled!\r\n");
+        } else {
+            DateTime time = clock.now();
+            printf("Now %02d:%02d:%02d\r\n", time.hour(), time.minute(), time.second());
         }
     }
 

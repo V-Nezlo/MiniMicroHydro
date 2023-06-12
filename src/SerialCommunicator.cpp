@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : SerialCommunicator.hpp
 //  Created     : 6.10.2022
-//  Modified    : 11.12.2022
+//  Modified    : 12.06.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : 
 
@@ -113,7 +113,7 @@ if (Serial.available()) {
 
                 if (newTime.hour() < 24 && newTime.minute() < 60 && newTime.second() < 60) {
                     ConfigStorage::instance()->temp.settingTime = newTime;
-                    printf("New time = h:%u m:%u s:%u\r\n", 
+                    printf("New time = h:%02d m:%02d s:%02d\r\n", 
                         ConfigStorage::instance()->temp.settingTime.hour(), 
                         ConfigStorage::instance()->temp.settingTime.minute(), 
                         ConfigStorage::instance()->temp.settingTime.second());
@@ -151,7 +151,7 @@ if (Serial.available()) {
 
                 if (newLightOffTime.hour() < 24 && newLightOffTime.minute() < 60) {
                     ConfigStorage::instance()->config.lightOffTime = newLightOffTime;
-                    printf("Light will be turned on in %u:%u and turned off in %u:%u \r\n",
+                    printf("Light will be turned on in %02d:%02d and turned off in %02d:%02d \r\n",
                         ConfigStorage::instance()->config.lightOnTime.hour(),
                         ConfigStorage::instance()->config.lightOnTime.minute(),
                         ConfigStorage::instance()->config.lightOffTime.hour(),
