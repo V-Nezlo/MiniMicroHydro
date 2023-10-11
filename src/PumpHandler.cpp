@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : PumpHandler.hpp
 //  Created     : 7.11.2022
-//  Modified    : 11.03.2023
+//  Modified    : 11.10.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : 
 
@@ -12,8 +12,8 @@ PumpHandler::PumpHandler(Gpio &aPump, Gpio *aButton, Gpio *aLedBlue, AbstractWat
     button{aButton},
     ledBlue{aLedBlue},
     state{State::PUMPOFF},
-    nextSwitchTime{0}, 
-    nextButtonCheckTime{TimeWrapper::milliseconds()},
+    previousSwitchTime{0}, 
+    previousButtonCheckTime{TimeWrapper::milliseconds()},
     permit{true},
     initialized{false},
     level{aLevel}
@@ -25,52 +25,61 @@ PumpHandler::PumpHandler(Gpio &aPump, Gpio *aButton, Gpio *aLedBlue, AbstractWat
 
 void PumpHandler::process()
 {
-    // Начинаем с состояния выкл и ждем полное время отключенного насоса
-    if (!initialized) {
-        initialized = true;
-        nextSwitchTime = TimeWrapper::milliseconds() + ConfigStorage::instance()->config.pumpOffTime;
-    }
-
     uint32_t currentTime = TimeWrapper::milliseconds();
 
-    if (currentTime > nextSwitchTime) {
-        if (state == State::PUMPOFF) {
-            state = State::PUMPON;
-            nextSwitchTime = currentTime + ConfigStorage::instance()->config.pumpOnTime;
-            // Если есть защита от работы нахолостую - проверяем уровень воды
-            if (level != nullptr) {
-                if (level->getPermit()) {
+    // Защита от переполнения переменной со временем
+    if (currentTime < previousSwitchTime) {
+        previousSwitchTime = 0;
+    }
+
+    switch (state) {
+        case State::PUMPON:
+        // Если насос сейчас включен - смотрим, не пора ли выключать
+            if (currentTime > previousSwitchTime + ConfigStorage::instance()->config.pumpOnTime) {
+                previousSwitchTime = currentTime;
+                // Переключаем состояние
+                state = State::PUMPOFF;
+                // Отключаем насос
+                pumpPin.reset(); 
+                // Переключаем лед если он сть
+                if (ledBlue != nullptr) {
+                    ledBlue->reset();
+                }
+            }
+            break;
+        case State::PUMPOFF:
+            if (currentTime > previousSwitchTime + ConfigStorage::instance()->config.pumpOffTime) {
+                previousSwitchTime = currentTime;
+                // Переключаем состояние
+                state = State::PUMPON;
+                // Если есть защита от сухого включения - проверяем её, если нет - тупо включаем насос
+                if (level != nullptr) {
+                    if (level->getPermit()) {
+                        pumpPin.set();
+                        if (ledBlue != nullptr) {
+                            ledBlue->set();
+                        }
+                    }
+                } else {
+                    // Если нет защиты от работы нахолостую - просто включаем
                     pumpPin.set();
                     if (ledBlue != nullptr) {
                         ledBlue->set();
                     }
                 }
-            } else {
-                // Если нет защиты от работы нахолостую - просто включаем
-                pumpPin.set();
-                if (ledBlue != nullptr) {
-                    ledBlue->set();
-                }
             }
-        } else if (state == State::PUMPON) {
-            state = State::PUMPOFF;
-            nextSwitchTime = currentTime + ConfigStorage::instance()->config.pumpOffTime;
-            pumpPin.reset(); // Отключаем насос
-            if (ledBlue != nullptr) {
-                ledBlue->reset();
-            }
-        }
+            break;
     }
 
-    if (button != nullptr && currentTime > nextButtonCheckTime) {
-        nextButtonCheckTime = currentTime + kButtonUpdateFreq;
+    if (button != nullptr && currentTime > previousButtonCheckTime + kButtonUpdateFreq) {
+        previousButtonCheckTime = currentTime;
         if (button->digitalRead() && state == State::PUMPOFF) {
             do {
                 pumpPin.set();
                 if (ledBlue != nullptr) {
                     ledBlue->set();
                 }
-                delay(100);
+                delay(100); // Не обернуто
             } while (button->digitalRead());
             pumpPin.reset();
             if (ledBlue != nullptr) {

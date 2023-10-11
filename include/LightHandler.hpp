@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : PumpHandler.hpp
 //  Created     : 3.12.2022
-//  Modified    : 12.06.2023
+//  Modified    : 12.10.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Обработчик лампы или эквивалентного устройства
 
@@ -20,7 +20,7 @@ public:
     LightHandler(uint16_t aUpdatePeriod, Gpio &aLightPin):
         lightPin{aLightPin},
         clock{},
-        nextCheckTime{0},
+        previousCheckTime{0},
         updatePeriod{aUpdatePeriod}
     {
         // Скажем остальному коду что у нас есть обработчик для лампы
@@ -43,9 +43,14 @@ public:
     {
         uint32_t currentTime = TimeWrapper::milliseconds();
 
-        if (currentTime > nextCheckTime) {
+        // Защита от переполнения времени
+        if (currentTime < previousCheckTime) {
+            previousCheckTime = 0;
+        }
 
-            nextCheckTime = currentTime + updatePeriod;
+        if (currentTime > previousCheckTime + updatePeriod) {
+            previousCheckTime = currentTime;
+
             DateTime time = clock.now();
             TimeContainer curContainedTime(time.hour(), time.minute(), time.second());
 
@@ -80,7 +85,7 @@ public:
 private:
     Gpio &lightPin;
     Clock clock;
-    uint32_t nextCheckTime;
+    uint32_t previousCheckTime;
     uint16_t updatePeriod;
 };
 
