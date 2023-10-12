@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : WaterLevelHandler.cpp
 //  Created     : 7.11.2022
-//  Modified    : 10.12.2022
+//  Modified    : 12.10.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description :
 
@@ -14,9 +14,9 @@
     waterLev3{aWaterLev3},
     beeper{aBeeper},
     type{Type::OneSensors},
-    nextUpdateTime{TimeWrapper::milliseconds()},
+    previousUpdateTime{TimeWrapper::milliseconds()},
     updatePeriod{aUpdatePeriod},
-    nextBeepTime{TimeWrapper::milliseconds()},
+    previousBeepTime{TimeWrapper::milliseconds()},
     currentProcents{0},
     permit{false},
     beepState{false},
@@ -42,7 +42,16 @@ void FloatLevelHandler::process()
     uint32_t currentTime = TimeWrapper::milliseconds();
     bool error = false;
 
-    if (currentTime > nextUpdateTime) {
+    // Защита от переполнения
+    if (currentTime < previousUpdateTime) {
+        previousUpdateTime = 0;
+    }
+    if (currentTime < previousBeepTime) {
+        previousBeepTime = 0;
+    }
+
+    if (currentTime > previousUpdateTime + updatePeriod) {
+        previousUpdateTime = currentTime;
 
         uint8_t procent{0};
         bool water1State = waterLev1.digitalRead(); // Самый низкий датчик, он есть всегда
@@ -94,22 +103,20 @@ void FloatLevelHandler::process()
 
         permit = !error;
         currentProcents = procent;
-        nextUpdateTime = currentTime + updatePeriod;
     }
 
-		// Яростно кричим зумером если вода на исходе
-	if (error && beeper != nullptr) {
-		if (currentTime > nextBeepTime) {
-			if (beepState) {
-				beepState = false;
-				nextBeepTime = currentTime + kBeepOffTime;
-			} else {
-				beepState = true;
-				nextBeepTime = currentTime + kBeepOnTime;
-			}
-			beeper->setState(beepState);
-		}
-	}
+    // Яростно кричим зуммером если вода на исходе
+    if (error && beeper != nullptr && (currentTime > previousBeepTime + kBeepOnTime
+        || currentTime > previousBeepTime + kBeepOffTime)) {
+        previousBeepTime = currentTime;
+        if (beepState && currentTime > previousBeepTime + kBeepOnTime) {
+            beepState = false;
+            beeper->setState(false);
+        } else if (!beepState && currentTime > previousBeepTime + kBeepOffTime) {
+            beepState = true;
+            beeper->setState(true);
+        }
+    }
 }
 
 uint8_t FloatLevelHandler::getLevel()
