@@ -19,7 +19,8 @@ class SerialCommunicator {
         SetPumpOffTime,
         SetTime,
         SetLightOnTime,
-        SetLightOffTime
+        SetLightOffTime,
+        BuzConfig
     };
 
     static constexpr uint8_t kMaxObservers{2};

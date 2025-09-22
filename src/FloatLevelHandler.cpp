@@ -5,10 +5,11 @@
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description :
 
+#include "ConfigStorage.hpp"
 #include "FloatWaterLevel.hpp"
 
     FloatLevelHandler::FloatLevelHandler(uint32_t aUpdatePeriod, bool aInversion, Gpio &aWaterLev1, Gpio *aWaterLev2, Gpio *aWaterLev3, 
-		AbstractWaterIndicator *aIndicator, Gpio *aBeeper):
+        AbstractWaterIndicator *aIndicator, Gpio *aBeeper):
     waterLev1{aWaterLev1},
     waterLev2{aWaterLev2},
     waterLev3{aWaterLev3},
@@ -42,15 +43,7 @@ void FloatLevelHandler::process()
     uint32_t currentTime = TimeWrapper::milliseconds();
     bool error = false;
 
-    // Защита от переполнения
-    if (currentTime < previousUpdateTime) {
-        previousUpdateTime = 0;
-    }
-    if (currentTime < previousBeepTime) {
-        previousBeepTime = 0;
-    }
-
-    if (currentTime > previousUpdateTime + updatePeriod) {
+    if (currentTime - previousUpdateTime >= updatePeriod) {
         previousUpdateTime = currentTime;
 
         uint8_t procent{0};
@@ -106,15 +99,16 @@ void FloatLevelHandler::process()
     }
 
     // Яростно кричим зуммером если вода на исходе
-    if (error && beeper != nullptr && (currentTime > previousBeepTime + kBeepOnTime
-        || currentTime > previousBeepTime + kBeepOffTime)) {
-        previousBeepTime = currentTime;
-        if (beepState && currentTime > previousBeepTime + kBeepOnTime) {
-            beepState = false;
-            beeper->setState(false);
-        } else if (!beepState && currentTime > previousBeepTime + kBeepOffTime) {
-            beepState = true;
-            beeper->setState(true);
+    if (ConfigStorage::instance()->config.buzzEnabled) {
+        if (error && beeper != nullptr && (currentTime - previousBeepTime > kBeepOnTime || currentTime - previousBeepTime >= kBeepOffTime)) {
+            previousBeepTime = currentTime;
+            if (beepState && currentTime > previousBeepTime + kBeepOnTime) {
+                beepState = false;
+                beeper->setState(false);
+            } else if (!beepState && currentTime > previousBeepTime + kBeepOffTime) {
+                beepState = true;
+                beeper->setState(true);
+            }
         }
     }
 }

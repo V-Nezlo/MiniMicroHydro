@@ -27,15 +27,10 @@ void PumpHandler::process()
 {
     uint32_t currentTime = TimeWrapper::milliseconds();
 
-    // Защита от переполнения переменной со временем
-    if (currentTime < previousSwitchTime) {
-        previousSwitchTime = 0;
-    }
-
     switch (state) {
         case State::PUMPON:
         // Если насос сейчас включен - смотрим, не пора ли выключать
-            if (currentTime > previousSwitchTime + ConfigStorage::instance()->config.pumpOnTime) {
+            if (currentTime - previousSwitchTime >= ConfigStorage::instance()->config.pumpOnTime) {
                 previousSwitchTime = currentTime;
                 // Переключаем состояние
                 state = State::PUMPOFF;
@@ -48,7 +43,7 @@ void PumpHandler::process()
             }
             break;
         case State::PUMPOFF:
-            if (currentTime > previousSwitchTime + ConfigStorage::instance()->config.pumpOffTime) {
+            if (currentTime - previousSwitchTime > ConfigStorage::instance()->config.pumpOffTime) {
                 previousSwitchTime = currentTime;
                 // Переключаем состояние
                 state = State::PUMPON;
@@ -71,7 +66,7 @@ void PumpHandler::process()
             break;
     }
 
-    if (button != nullptr && currentTime > previousButtonCheckTime + kButtonUpdateFreq) {
+    if (button != nullptr && currentTime - previousButtonCheckTime >= kButtonUpdateFreq) {
         previousButtonCheckTime = currentTime;
         if (button->digitalRead() && state == State::PUMPOFF) {
             do {

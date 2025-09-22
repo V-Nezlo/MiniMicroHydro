@@ -43,12 +43,7 @@ public:
     {
         uint32_t currentTime = TimeWrapper::milliseconds();
 
-        // Защита от переполнения времени
-        if (currentTime < previousCheckTime) {
-            previousCheckTime = 0;
-        }
-
-        if (currentTime > previousCheckTime + updatePeriod) {
+        if (currentTime - previousCheckTime >= updatePeriod) {
             previousCheckTime = currentTime;
 
             DateTime time = clock.now();
