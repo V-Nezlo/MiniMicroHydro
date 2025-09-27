@@ -19,6 +19,7 @@ public:
         uint32_t pumpOffTime{10000};
         TimeContainer lightOnTime;
         TimeContainer lightOffTime;
+        bool buzzEnabled{false};
     } config;
     // Структура для данных, которые не нужно хранить в энергонезависимой памяти
     struct Temp {

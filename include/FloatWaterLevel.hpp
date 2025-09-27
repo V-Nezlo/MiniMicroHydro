@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : WaterLevelHandler.hpp
 //  Created     : 6.10.2022
-//  Modified    : 10.12.2022
+//  Modified    : 12.10.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Реализация работы электродного датчика уровня
 
@@ -44,9 +44,9 @@ enum class Type{
 	OneSensors
 } type;
 
-uint32_t nextUpdateTime; // Ms
+uint32_t previousUpdateTime; // Ms
 uint32_t updatePeriod; // Ms
-uint32_t nextBeepTime; // Ms
+uint32_t previousBeepTime; // Ms
 bool isFloatLevel;
 
 uint8_t currentProcents;

@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 //  File        : PumpHandler.hpp
 //  Created     : 6.10.2022
-//  Modified    : 11.03.2023
+//  Modified    : 11.10.2023
 //  Author      : V-Nezlo (vlladimirka@gmail.com)
 //  Description : Обработчик насоса
 
@@ -31,8 +31,9 @@ Gpio *button;
 Gpio *ledBlue;
 
 State state;
-uint32_t nextSwitchTime;
-uint32_t nextButtonCheckTime;
+uint32_t previousSwitchTime;
+uint32_t previousButtonCheckTime;
+uint32_t previousTime;
 bool permit;
 bool initialized;
 

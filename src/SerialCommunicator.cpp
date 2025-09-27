@@ -51,7 +51,7 @@ if (Serial.available()) {
 
     // Команда выводит справку
     if (buffer == "help" && state == State::Idle) {
-        printf("Supported commands: pumpconfig, lightconfig, settime, time \r\n");
+        printf("Supported commands: pumpconfig, lightconfig, settime, time, buzconfig \r\n");
         return;
     }
 
@@ -76,6 +76,9 @@ if (Serial.available()) {
                 } else {
                     printf("unsupported\r\n");
                 }
+            } else if (buffer == "buzconfig") {
+                state = State::BuzConfig;
+                printf("Enter buzzer usage : on or off\r\n");
             } else {
                 printf("unsupported\r\n");
             }
@@ -102,9 +105,7 @@ if (Serial.available()) {
             }
             break;
         case State::SetTime:
-            if (buffer.indexOf(0x20, 0) == 2 && buffer.indexOf(0x20, 3) == 5 && buffer.length() == 8)
-            {
-
+            if (buffer.indexOf(0x20, 0) == 2 && buffer.indexOf(0x20, 3) == 5 && buffer.length() == 8){
                 TimeContainer newTime(
                      static_cast<uint8_t>(buffer.substring(0, 2).toInt()),
                      static_cast<uint8_t>(buffer.substring(3, 5).toInt()),
@@ -163,6 +164,22 @@ if (Serial.available()) {
                 } else {
                     printf("Wrong time\r\n");
                 }
+            } else {
+                printf("Wrong argument\r\n");
+            }
+            break;
+
+        case State::BuzConfig:
+            if (buffer == "on") {
+                ConfigStorage::instance()->config.buzzEnabled = true;
+                callbacks();
+                state = State::Idle;
+                printf("Buzzer is on\r\n");
+            } else if (buffer == "off") {
+                ConfigStorage::instance()->config.buzzEnabled = false;
+                callbacks();
+                state = State::Idle;
+                printf("Buzzer is off\r\n");
             } else {
                 printf("Wrong argument\r\n");
             }
